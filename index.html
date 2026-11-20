@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Побег из квартиры</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101722;font-family:system-ui;color:white}canvas{display:block;width:100%;height:100%;touch-action:none}
+#hud{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}.pill{background:#101722dc;border:1px solid #ffffff35;border-radius:13px;padding:9px 12px;font-size:13px}
+#hint{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#101722dc;border-radius:12px;padding:8px 12px;font-size:13px;text-align:center;max-width:92%;pointer-events:none}
+#controls{position:fixed;bottom:18px;left:18px;right:18px;display:flex;justify-content:space-between;align-items:end;pointer-events:none}
+#stick{width:116px;height:116px;border-radius:50%;background:#ffffff22;border:2px solid #ffffff66;position:relative;pointer-events:auto;touch-action:none}
+#knob{position:absolute;width:48px;height:48px;left:32px;top:32px;border-radius:50%;background:#ffffffc9;box-shadow:0 2px 10px #0008}
+#actions{display:flex;gap:9px;align-items:end;pointer-events:auto}button{border:1px solid #ffffff55;color:#fff;background:#17283deF;border-radius:15px;padding:12px 14px;font-weight:750;font-size:13px;touch-action:manipulation}button:active{transform:scale(.96)}#jump{width:70px;height:70px;border-radius:50%;background:#c57b27}
+#switch{position:fixed;right:12px;top:60px}
+#overlay{position:fixed;inset:0;background:#0b1019ed;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center}
+.panel{max-width:450px;background:#19283b;border:1px solid #ffffff35;border-radius:24px;padding:24px;box-shadow:0 20px 70px #0009}.panel h1{font-size:27px;margin:0 0 10px}.panel p{line-height:1.5;color:#d8e1ed}.panel button{margin:5px}.small{font-size:12px;color:#aebbd0}
+@media(min-width:800px){#controls{opacity:.82}}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud"><div class="pill" id="goal">⚙️ Детали: 0 / 5</div><div class="pill">🚪 Выход из квартиры</div></div>
+<div id="hint">Собери 5 деталей и доберись до зелёной метки у двери</div>
+<button id="switch">🚗 Машинка</button>
+<div id="controls"><div id="stick"><div id="knob"></div></div><div id="actions"><button id="jump">ПРЫЖОК</button></div></div>
+<div id="overlay"><div class="panel"><h1>🏠 Побег из квартиры</h1><p>Ты — маленькая игрушка в огромной квартире! Собери 5 деталей, исследуй комнаты и найди выходную дверь.</p><p class="small">Телефон: джойстик и прыжок. Компьютер: WASD / стрелки и пробел.</p><button id="start">НАЧАТЬ ПОБЕГ</button><div><button id="chooseCar">🚗 Машинка</button><button id="chooseHuman">🧍 Человечек</button></div></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
+<script>
+(()=>{
+const canvas=document.querySelector('#game'),scene=new THREE.Scene();scene.background=new THREE.Color(0x9bc5df);scene.fog=new THREE.Fog(0x9bc5df,27,70);
+const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,150);
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;
+scene.add(new THREE.HemisphereLight(0xffffff,0x687080,2));
+const sun=new THREE.DirectionalLight(0xffffff,2.1);sun.position.set(-8,16,9);sun.castShadow=true;scene.add(sun);
+const mat=c=>new THREE.MeshStandardMaterial({color:c,roughness:.82});
+function box(x,y,z,sx,sy,sz,m){const o=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;scene.add(o);return o}
+const floor=mat(0xb99b75),wall=mat(0xe9dfce),wood=mat(0x765038),blue=mat(0x287bc0),red=mat(0xd34c3f),dark=mat(0x263342),gold=mat(0xf4c542);
+box(0,-.25,0,34,.5,26,floor);box(0,5,-13,34,10,.4,wall);box(-17,5,0,.4,10,26,wall);box(17,5,0,.4,10,26,wall);box(0,5,13,34,10,.4,wall);
+box(0,.08,-12.72,33,.16,.12,wood);box(-16.72,.08,0,.12,.16,25,wood);box(16.72,.08,0,.12,.16,25,wood);
+// Гостиная, кухонные шкафы, стол, ковёр
+box(-8,1.2,-6,7,2.4,3.2,mat(0x657d91));box(-8,2.5,-7.35,7,.5,.5,mat(0x526a80));
+box(-8,.65,-2.8,8,.5,1.3,wood);for(let x of [-11,-5])box(x,.25,-2.8,.25,.5,.25,dark);
+box(6,1.6,-7,5,3.2,3,mat(0xd8d1c4));box(6,3.3,-7,5,.25,3,mat(0xb9c0c4));
+box(7,.7,1,4,1.4,3,mat(0x9a6541));box(7,1.5,1,4,.2,3,wood);
+box(-5,.8,7,4,1.6,2,mat(0x4e6e86));box(-5,1.7,7,4,.2,2,mat(0x354e63));
+box(1,.015,3,9,.04,6,mat(0x477b79));box(0,1.5,5,4,.25,2.4,wood);
+for(const x of [-1.7,1.7])for(const z of [4.1,5.9])box(x,.75,z,.18,1.5,.18,wood);
+// Дверь и выход
+box(13,2.2,-12.72,2.5,4.4,.18,wood);box(13,2.2,-12.58,2.1,4.1,.08,mat(0x9b6744));box(13.8,2.2,-12.45,.12,.12,.12,gold);
+const exitRing=new THREE.Mesh(new THREE.RingGeometry(.8,1.05,32),mat(0x42e68b));exitRing.position.set(13,.08,-10.7);exitRing.rotation.x=-Math.PI/2;scene.add(exitRing);
+let player,kind='car',velocityY=0,onGround=true,started=false,won=false,collected=0;
+function buildPlayer(type){if(player)scene.remove(player);player=new THREE.Group();
+if(type==='car'){const body=new THREE.Mesh(new THREE.BoxGeometry(1.25,.42,.72),red);body.position.y=.42;player.add(body);const cabin=new THREE.Mesh(new THREE.BoxGeometry(.62,.42,.58),blue);cabin.position.set(-.05,.79,0);player.add(cabin);for(const x of [-.42,.42])for(const z of [-.4,.4]){const w=new THREE.Mesh(new THREE.CylinderGeometry(.16,.16,.12,16),dark);w.rotation.x=Math.PI/2;w.position.set(x,.22,z);player.add(w)}}
+else{const torso=new THREE.Mesh(new THREE.BoxGeometry(.48,.65,.35),blue);torso.position.y=.72;player.add(torso);const head=new THREE.Mesh(new THREE.SphereGeometry(.27,16,12),mat(0xf0c49b));head.position.y=1.25;player.add(head);for(const x of [-.16,.16]){const leg=new THREE.Mesh(new THREE.BoxGeometry(.16,.48,.18),dark);leg.position.set(x,.24,0);player.add(leg)}}
+scene.add(player);player.position.set(0,0,9);kind=type;document.querySelector('#switch').textContent=type==='car'?'🚗 Машинка':'🧍 Человечек'}
+buildPlayer('car');
+const gears=[];for(const [x,z] of [[-13,7],[-12,-8],[1,-8],[11,5],[13,-5]]){const g=new THREE.Mesh(new THREE.TorusGeometry(.34,.12,8,18),gold);g.position.set(x,.75,z);g.rotation.x=Math.PI/2;scene.add(g);gears.push(g)}
+const obstacles=[[-8,-6,4.2,2.1],[-8,-2.8,4.2,1.1],[6,-7,3,2],[7,1,2,2],[-5,7,2,1.5],[0,5,2.2,1.2]];
+const keys={};let joy={x:0,y:0};
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key===' ')jump()});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+function jump(){if(onGround&&started&&!won){velocityY=5.8;onGround=false}}
+document.querySelector('#jump').onclick=jump;document.querySelector('#switch').onclick=()=>buildPlayer(kind==='car'?'human':'car');
+const stick=document.querySelector('#stick'),knob=document.querySelector('#knob');let active=false;
+function setJoy(e){const r=stick.getBoundingClientRect(),p=e;let dx=p.clientX-(r.left+r.width/2),dy=p.clientY-(r.top+r.height/2),len=Math.hypot(dx,dy),max=43;if(len>max){dx*=max/len;dy*=max/len}joy.x=dx/max;joy.y=dy/max;knob.style.transform=`translate(${dx}px,${dy}px)`}
+stick.addEventListener('pointerdown',e=>{active=true;stick.setPointerCapture(e.pointerId);setJoy(e)});stick.addEventListener('pointermove',e=>{if(active)setJoy(e)});function stop(){active=false;joy={x:0,y:0};knob.style.transform='translate(0,0)'}stick.addEventListener('pointerup',stop);stick.addEventListener('pointercancel',stop);
+document.querySelector('#start').onclick=()=>{started=true;document.querySelector('#overlay').style.display='none'};
+document.querySelector('#chooseCar').onclick=()=>{buildPlayer('car');started=true;document.querySelector('#overlay').style.display='none'};
+document.querySelector('#chooseHuman').onclick=()=>{buildPlayer('human');started=true;document.querySelector('#overlay').style.display='none'};
+const clock=new THREE.Clock();
+function blocked(x,z){if(Math.abs(x)>16||Math.abs(z)>12)return true;return obstacles.some(([ox,oz,w,d])=>Math.abs(x-ox)<w/2+.55&&Math.abs(z-oz)<d/2+.55)}
+function update(dt){if(!started||won)return;
+let f=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0)-joy.y,s=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+joy.x,len=Math.hypot(f,s);if(len>1){f/=len;s/=len}
+const speed=kind==='car'?5.5:4.1,dx=s*speed*dt,dz=-f*speed*dt,nx=player.position.x+dx,nz=player.position.z+dz;
+if(!blocked(nx,player.position.z))player.position.x=nx;if(!blocked(player.position.x,nz))player.position.z=nz;if(len>.05)player.rotation.y=Math.atan2(s,-f);
+velocityY-=14*dt;player.position.y+=velocityY*dt;if(player.position.y<=0){player.position.y=0;velocityY=0;onGround=true}
+gears.forEach(g=>{if(g.visible){g.rotation.z+=dt*1.8;if(player.position.distanceTo(g.position)<1.05){g.visible=false;collected++;document.querySelector('#goal').textContent=`⚙️ Детали: ${collected} / 5`}}});
+camera.position.lerp(new THREE.Vector3(player.position.x,player.position.y+5.3,player.position.z+8.5),1-Math.pow(.001,dt));camera.lookAt(player.position.x,player.position.y+.6,player.position.z);
+if(collected===5)document.querySelector('#hint').textContent='Все детали собраны! Доберись до зелёного кольца у двери.';
+if(collected===5&&Math.hypot(player.position.x-13,player.position.z+10.7)<2){won=true;document.querySelector('#overlay').style.display='flex';document.querySelector('.panel').innerHTML='<h1>🎉 Ты сбежал!</h1><p>Поздравляем! Ты выбрался из квартиры.</p><button onclick="location.reload()">ИГРАТЬ СНОВА</button>'}
+}
+function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.04);update(dt);renderer.render(scene,camera)}loop();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+})();
+</script>
+</body></html>
