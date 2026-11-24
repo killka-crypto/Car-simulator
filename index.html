@@ -12,7 +12,7 @@
 #knob{position:absolute;width:48px;height:48px;left:32px;top:32px;border-radius:50%;background:#ffffffc9;box-shadow:0 2px 10px #0008}
 #actions{display:flex;gap:9px;align-items:end;pointer-events:auto}button{border:1px solid #ffffff55;color:#fff;background:#17283deF;border-radius:15px;padding:12px 14px;font-weight:750;font-size:13px;touch-action:manipulation}button:active{transform:scale(.96)}#jump{width:70px;height:70px;border-radius:50%;background:#c57b27}
 #switch{position:fixed;right:12px;top:60px}
-#overlay{position:fixed;inset:0;background:#0b1019ed;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center}
+#overlay{position:fixed;inset:0;z-index:50;background:#0b1019ed;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center;pointer-events:auto}#overlay button{position:relative;z-index:51;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer}
 .panel{max-width:450px;background:#19283b;border:1px solid #ffffff35;border-radius:24px;padding:24px;box-shadow:0 20px 70px #0009}.panel h1{font-size:27px;margin:0 0 10px}.panel p{line-height:1.5;color:#d8e1ed}.panel button{margin:5px}.small{font-size:12px;color:#aebbd0}
 @media(min-width:800px){#controls{opacity:.82}}
 </style>
@@ -23,9 +23,20 @@
 <div id="hint">Собери 5 деталей и доберись до зелёной метки у двери</div>
 <button id="switch">🚗 Машинка</button>
 <div id="controls"><div id="stick"><div id="knob"></div></div><div id="actions"><button id="jump">ПРЫЖОК</button></div></div>
-<div id="overlay"><div class="panel"><h1>🏠 Побег из квартиры</h1><p>Ты — маленькая игрушка в огромной квартире! Собери 5 деталей, исследуй комнаты и найди выходную дверь.</p><p class="small">Телефон: джойстик и прыжок. Компьютер: WASD / стрелки и пробел.</p><button id="start">НАЧАТЬ ПОБЕГ</button><div><button id="chooseCar">🚗 Машинка</button><button id="chooseHuman">🧍 Человечек</button></div></div></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
+<div id="overlay"><div class="panel"><h1>🏠 Побег из квартиры</h1><p>Ты — маленькая игрушка в огромной квартире! Собери 5 деталей, исследуй комнаты и найди выходную дверь.</p><p class="small">Телефон: джойстик и прыжок. Компьютер: WASD / стрелки и пробел.</p><button id="start" type="button">НАЧАТЬ ПОБЕГ</button><div id="loadStatus" class="small" role="status">Загрузка 3D-мира…</div><div><button id="chooseCar" type="button">🚗 Машинка</button><button id="chooseHuman" type="button">🧍 Человечек</button></div></div></div>
 <script>
+(function(){
+ const status=document.getElementById('loadStatus');
+ const urls=['https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js','https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js'];
+ function load(i){
+  if(i>=urls.length){if(status)status.textContent='Не удалось загрузить 3D-движок. Проверь интернет и обнови страницу.';return;}
+  const s=document.createElement('script');s.src=urls[i];
+  s.onload=()=>{try{initGame()}catch(e){console.error(e);if(status)status.textContent='Ошибка запуска игры. Обнови страницу.'}};
+  s.onerror=()=>load(i+1);document.head.appendChild(s);
+ }
+ load(0);
+})();
+function initGame(){
 (()=>{
 const canvas=document.querySelector('#game'),scene=new THREE.Scene();scene.background=new THREE.Color(0x9bc5df);scene.fog=new THREE.Fog(0x9bc5df,27,70);
 const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,150);
@@ -82,6 +93,7 @@ if(type==='car'){const body=new THREE.Mesh(new THREE.BoxGeometry(1.25,.42,.72),r
 else{const torso=new THREE.Mesh(new THREE.BoxGeometry(.48,.65,.35),blue);torso.position.y=.72;player.add(torso);const head=new THREE.Mesh(new THREE.SphereGeometry(.27,16,12),mat(0xf0c49b));head.position.y=1.25;player.add(head);for(const x of [-.16,.16]){const leg=new THREE.Mesh(new THREE.BoxGeometry(.16,.48,.18),dark);leg.position.set(x,.24,0);player.add(leg)}}
 scene.add(player);player.position.set(0,0,9);kind=type;document.querySelector('#switch').textContent=type==='car'?'🚗 Машинка':'🧍 Человечек'}
 buildPlayer('car');
+ const loadStatus=document.querySelector('#loadStatus');if(loadStatus)loadStatus.textContent='Игра загружена! Нажми «НАЧАТЬ ПОБЕГ».';
 const gears=[];for(const [x,z] of [[-13,7],[-12,-8],[1,-8],[11,5],[13,-5]]){const g=new THREE.Mesh(new THREE.TorusGeometry(.34,.12,8,18),gold);g.position.set(x,.75,z);g.rotation.x=Math.PI/2;scene.add(g);gears.push(g)}
 const obstacles=[[-8,-6,4.2,2.1],[-8,-2.8,4.2,1.1],[6,-7,3,2],[7,1,2,2],[-5,7,2,1.5],[0,5,2.2,1.2]];
 const keys={};let joy={x:0,y:0};
@@ -91,9 +103,9 @@ document.querySelector('#jump').onclick=jump;document.querySelector('#switch').o
 const stick=document.querySelector('#stick'),knob=document.querySelector('#knob');let active=false;
 function setJoy(e){const r=stick.getBoundingClientRect(),p=e;let dx=p.clientX-(r.left+r.width/2),dy=p.clientY-(r.top+r.height/2),len=Math.hypot(dx,dy),max=43;if(len>max){dx*=max/len;dy*=max/len}joy.x=dx/max;joy.y=dy/max;knob.style.transform=`translate(${dx}px,${dy}px)`}
 stick.addEventListener('pointerdown',e=>{active=true;stick.setPointerCapture(e.pointerId);setJoy(e)});stick.addEventListener('pointermove',e=>{if(active)setJoy(e)});function stop(){active=false;joy={x:0,y:0};knob.style.transform='translate(0,0)'}stick.addEventListener('pointerup',stop);stick.addEventListener('pointercancel',stop);
-document.querySelector('#start').onclick=()=>{started=true;document.querySelector('#overlay').style.display='none'};
-document.querySelector('#chooseCar').onclick=()=>{buildPlayer('car');started=true;document.querySelector('#overlay').style.display='none'};
-document.querySelector('#chooseHuman').onclick=()=>{buildPlayer('human');started=true;document.querySelector('#overlay').style.display='none'};
+document.querySelector('#start').addEventListener('click',()=>{started=true;document.querySelector('#overlay').style.display='none'});
+document.querySelector('#chooseCar').addEventListener('click',()=>{buildPlayer('car');started=true;document.querySelector('#overlay').style.display='none'});
+document.querySelector('#chooseHuman').addEventListener('click',()=>{buildPlayer('human');started=true;document.querySelector('#overlay').style.display='none'});
 const clock=new THREE.Clock();
 function blocked(x,z){if(Math.abs(x)>16||Math.abs(z)>12)return true;return obstacles.some(([ox,oz,w,d])=>Math.abs(x-ox)<w/2+.55&&Math.abs(z-oz)<d/2+.55)}
 function update(dt){if(!started||won)return;
@@ -109,5 +121,6 @@ if(collected===5&&Math.hypot(player.position.x-13,player.position.z+10.7)<2){won
 function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.04);update(dt);renderer.render(scene,camera)}loop();
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 })();
+}
 </script>
 </body></html>
