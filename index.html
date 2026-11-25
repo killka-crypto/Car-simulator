@@ -49,32 +49,52 @@ const floor=mat(0x9a8067,.38),wall=mat(0xf0efec,.72),wood=mat(0x493025,.42),blue
 const marble=mat(0xd8d8d5,.2),blackMetal=mat(0x171a20,.28,.7),walnut=mat(0x38251e,.4);
 const glass=new THREE.MeshPhysicalMaterial({color:0xb9e2f4,roughness:.08,metalness:.08,transparent:true,opacity:.24});
 box(0,-.25,0,34,.5,26,floor);box(0,5,-13,34,10,.4,wall);box(-17,5,0,.4,10,26,wall);box(17,5,0,.4,10,26,wall);box(0,5,13,34,10,.4,wall);
-// Панорамные окна, тёмные рамы и деревянная акцентная стена
-box(0,.03,0,33.5,.08,25.5,marble);
-for(let x=-15;x<=15;x+=5){box(x,4.8,-12.72,4.7,8.7,.1,glass);box(x-2.4,4.8,-12.57,.13,8.9,.2,blackMetal);box(x+2.4,4.8,-12.57,.13,8.9,.2,blackMetal)}
-box(0,.14,-12.45,34,.18,.25,blackMetal);box(0,9.15,-12.45,34,.18,.25,blackMetal);
-box(16.82,4.7,0,.16,9,26,walnut);
+// Декор особняка: панорамные окна и акцентная деревянная стена
+for(let x=-15;x<=15;x+=5){
+ box(x,4.8,-12.72,4.7,8.7,.1,wall);
+ box(x-2.4,4.8,-12.57,.13,8.9,.2,dark);
+ box(x+2.4,4.8,-12.57,.13,8.9,dark);
+}
+box(0,.14,-12.45,34,.18,.25,dark);
+box(0,9.15,-12.45,34,.18,.25,dark);
+box(16.82,4.7,0,.16,9,26,wood);
 for(let z=-12.5;z<13;z+=.42)box(16.68,4.7,z,.12,9,.1,wood);
-// Мраморная лестница с металлическими балясинами
-for(let i=0;i<13;i++){const st=box(-14+i*.72,.2+i*.27,9-i*.62,3.3,.24,1.15,marble);st.rotation.y=-.16;box(-14+i*.72,.34+i*.27,9-i*.62,3.25,.055,1.12,gold)}
-for(let i=0;i<20;i++){const x=-14+i*.48,z=9-i*.42,y=.5+i*.12;box(x,y,z,.055,1.1,.055,blackMetal)}
-box(-5.1,2.25,4.2,.12,.12,9,walnut);
-// Верхняя галерея и перила
-box(3,4.25,-6,12,.28,4.2,walnut);
-for(let x=-2.5;x<=8.5;x+=.55)box(x,3.65,-3.9,.055,1.15,.055,blackMetal);
+// Лестничные ступени с золотистыми кромками и балясинами
+for(let i=0;i<13;i++){
+ const st=box(-14+i*.72,.2+i*.27,9-i*.62,3.3,.24,1.15,wall);
+ st.rotation.y=-.16;
+ box(-14+i*.72,.34+i*.27,9-i*.62,3.25,.055,1.12,gold);
+}
+for(let i=0;i<20;i++){
+ const x=-14+i*.48,z=9-i*.42,y=.5+i*.12;
+ box(x,y,z,.055,1.1,.055,dark);
+}
+box(-5.1,2.25,4.2,.12,.12,9,wood);
+// Галерея и перила
+box(3,4.25,-6,12,.28,4.2,wood);
+for(let x=-2.5;x<=8.5;x+=.55)box(x,3.65,-3.9,.055,1.15,.055,dark);
 box(3,4.15,-3.9,12,.12,.15,gold);
-// Камин и декоративное пламя
-box(9,1.5,8,5,.22,3,blackMetal);box(9,1.55,6.45,4.5,2.6,.3,walnut);box(9,1.1,6.27,3.6,1.1,.08,mat(0x080b10));
-for(let i=0;i<5;i++)mesh(new THREE.ConeGeometry(.2,.75,8),new THREE.MeshBasicMaterial({color:i%2?0xff741c:0xffd04a}),7.6+i*.58,.9,6.15);
-// Подвесные дизайнерские светильники
-for(const [x,z] of [[-2,-3],[5,-8],[12,2]]){cylinder(x,6.6,z,.025,.025,2.3,blackMetal);sphere(x,5.35,z,.32,mat(0xffe6b2,.2));const lamp=new THREE.PointLight(0xffd49a,.65,9);lamp.position.set(x,5.3,z);scene.add(lamp)}
-// Большие комнатные растения
-function luxuryPlant(x,z){cylinder(x,.42,z,.5,.62,.75,mat(0x29231f));cylinder(x,1.55,z,.055,.07,2.1,mat(0x465d3a));for(let i=0;i<7;i++){const a=i*Math.PI*2/7;const leaf=sphere(x+Math.cos(a)*.5,1.8+(i%3)*.2,z+Math.sin(a)*.5,.48,mat(0x347443));leaf.scale.set(.55,.2,1);leaf.rotation.y=-a}}
-luxuryPlant(-14,10);luxuryPlant(-15,-9);luxuryPlant(12,7);
-// Игрушечный гоночный трамплин
-for(let i=0;i<9;i++){const ramp=box(9+i*.34,.18+i*.18,4-i*.5,2.7,.2,.9,walnut);ramp.rotation.x=-.25;ramp.rotation.z=-.1}
-for(let x of [8,11])box(x,1,2.3,.12,1.8,.12,blackMetal);
-
+// Камин с декоративным пламенем (геометрия без дополнительных библиотек)
+box(9,1.5,8,5,.22,3,dark);
+box(9,1.55,6.45,4.5,2.6,.3,wood);
+box(9,1.1,6.27,3.6,1.1,.08,dark);
+for(let i=0;i<5;i++)box(7.6+i*.58,.9,6.15,.18,.7+(i%2)*.2,.18,red);
+// Подвесные светильники
+for(const [x,z] of [[-2,-3],[5,-8],[12,2]]){
+ box(x,6.6,z,.04,2.3,.04,dark);
+ box(x,5.35,z,.65,.22,.65,gold);
+}
+// Кашпо и стилизованные растения из простых блоков
+for(const [x,z] of [[-14,10],[-15,-9],[12,7]]){
+ box(x,.42,z,.9,.75,.9,wood);
+ for(let i=0;i<5;i++)box(x+(i-2)*.22,1.65+(i%2)*.35,z,.12,1.7,.12,blue);
+}
+// Игрушечный трамплин
+for(let i=0;i<9;i++){
+ const ramp=box(9+i*.34,.18+i*.18,4-i*.5,2.7,.2,.9,wood);
+ ramp.rotation.x=-.25;ramp.rotation.z=-.1;
+}
+for(let x of [8,11])box(x,1,2.3,.12,1.8,.12,dark);
 box(0,.08,-12.72,33,.16,.12,wood);box(-16.72,.08,0,.12,.16,25,wood);box(16.72,.08,0,.12,.16,25,wood);
 // Гостиная, кухонные шкафы, стол, ковёр
 box(-8,1.2,-6,7,2.4,3.2,mat(0x343b43,.42));box(-8,2.5,-7.35,7,.5,.5,mat(0x222830,.4));
